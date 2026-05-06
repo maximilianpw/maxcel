@@ -1,0 +1,351 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Terraform/OpenTofu generation > snapshot for backend-only projects 1`] = `
+"terraform {
+  cloud {
+    organization = var.terraform_cloud_organization
+    workspaces {
+      name = "maxcel-demo-app"
+    }
+  }
+
+  required_providers {
+    digitalocean = { source = "digitalocean/digitalocean", version = "~> 2.0" }
+    cloudflare = { source = "cloudflare/cloudflare", version = "~> 5.0" }
+  }
+}
+
+variable "terraform_cloud_organization" { type = string }
+variable "digitalocean_token" { type = string, sensitive = true }
+variable "cloudflare_api_token" { type = string, sensitive = true }
+variable "cloudflare_zone_id" { type = string }
+variable "project_SESSION_SECRET" { type = string, sensitive = true }
+
+provider "digitalocean" { token = var.digitalocean_token }
+provider "cloudflare" { api_token = var.cloudflare_api_token }
+
+resource "digitalocean_app" "demo_app" {
+  spec {
+    name   = "maxcel-demo-app"
+    region = "nyc"
+
+    service {
+      name             = "demo-app-backend"
+      source_dir       = "apps/api"
+      build_command    = "npm run build"
+      run_command      = "node dist/index.mjs"
+      instance_count   = 1
+      instance_size_slug = "basic-xxs"
+
+      github {
+        repo           = "maxpw/demo-api"
+        branch         = "main"
+        deploy_on_push = true
+      }
+
+      env {
+        key   = "SESSION_SECRET"
+        value = var.project_SESSION_SECRET
+        type  = "SECRET"
+      }
+    }
+
+    domain {
+      name = "demo-app.maximilian.pw"
+      type = "PRIMARY"
+      zone = "maximilian.pw"
+    }
+  }
+}
+
+resource "cloudflare_dns_record" "demo_app" {
+  zone_id = var.cloudflare_zone_id
+  name    = "demo-app"
+  content = digitalocean_app.demo_app.default_ingress
+  type    = "CNAME"
+  proxied = true
+  ttl     = 1
+}
+
+output "app_url" { value = "https://demo-app.maximilian.pw" }"
+`;
+
+exports[`Terraform/OpenTofu generation > snapshot for frontend-backend projects 1`] = `
+"terraform {
+  cloud {
+    organization = var.terraform_cloud_organization
+    workspaces {
+      name = "maxcel-demo-app"
+    }
+  }
+
+  required_providers {
+    digitalocean = { source = "digitalocean/digitalocean", version = "~> 2.0" }
+    cloudflare = { source = "cloudflare/cloudflare", version = "~> 5.0" }
+  }
+}
+
+variable "terraform_cloud_organization" { type = string }
+variable "digitalocean_token" { type = string, sensitive = true }
+variable "cloudflare_api_token" { type = string, sensitive = true }
+variable "cloudflare_zone_id" { type = string }
+variable "project_SESSION_SECRET" { type = string, sensitive = true }
+
+provider "digitalocean" { token = var.digitalocean_token }
+provider "cloudflare" { api_token = var.cloudflare_api_token }
+
+resource "digitalocean_app" "demo_app" {
+  spec {
+    name   = "maxcel-demo-app"
+    region = "nyc"
+
+    static_site {
+      name             = "demo-app-frontend"
+      source_dir       = "apps/web"
+      build_command    = "npm run build"
+      output_dir       = "dist"
+
+      github {
+        repo           = "maxpw/demo-web"
+        branch         = "main"
+        deploy_on_push = true
+      }
+
+      env {
+        key   = "SESSION_SECRET"
+        value = var.project_SESSION_SECRET
+        type  = "SECRET"
+      }
+    }
+
+    service {
+      name             = "demo-app-backend"
+      source_dir       = "apps/api"
+      build_command    = "npm run build"
+      run_command      = "node dist/index.mjs"
+      instance_count   = 1
+      instance_size_slug = "basic-xxs"
+
+      github {
+        repo           = "maxpw/demo-api"
+        branch         = "main"
+        deploy_on_push = true
+      }
+
+      env {
+        key   = "SESSION_SECRET"
+        value = var.project_SESSION_SECRET
+        type  = "SECRET"
+      }
+    }
+
+    domain {
+      name = "demo-app.maximilian.pw"
+      type = "PRIMARY"
+      zone = "maximilian.pw"
+    }
+  }
+}
+
+resource "cloudflare_dns_record" "demo_app" {
+  zone_id = var.cloudflare_zone_id
+  name    = "demo-app"
+  content = digitalocean_app.demo_app.default_ingress
+  type    = "CNAME"
+  proxied = true
+  ttl     = 1
+}
+
+output "app_url" { value = "https://demo-app.maximilian.pw" }"
+`;
+
+exports[`Terraform/OpenTofu generation > snapshot for frontend-backend-database projects 1`] = `
+"terraform {
+  cloud {
+    organization = var.terraform_cloud_organization
+    workspaces {
+      name = "maxcel-demo-app"
+    }
+  }
+
+  required_providers {
+    digitalocean = { source = "digitalocean/digitalocean", version = "~> 2.0" }
+    cloudflare = { source = "cloudflare/cloudflare", version = "~> 5.0" }
+  }
+}
+
+variable "terraform_cloud_organization" { type = string }
+variable "digitalocean_token" { type = string, sensitive = true }
+variable "cloudflare_api_token" { type = string, sensitive = true }
+variable "cloudflare_zone_id" { type = string }
+variable "project_SESSION_SECRET" { type = string, sensitive = true }
+
+provider "digitalocean" { token = var.digitalocean_token }
+provider "cloudflare" { api_token = var.cloudflare_api_token }
+
+data "digitalocean_database_cluster" "shared_postgres" {
+  name = "maxcel-shared-v1"
+}
+
+resource "digitalocean_database_db" "demo_app" {
+  cluster_id = data.digitalocean_database_cluster.shared_postgres.id
+  name       = "maxcel_demo_app_db"
+}
+
+resource "digitalocean_database_user" "demo_app" {
+  cluster_id = data.digitalocean_database_cluster.shared_postgres.id
+  name       = "maxcel_demo_app_app"
+}
+
+resource "digitalocean_app" "demo_app" {
+  spec {
+    name   = "maxcel-demo-app"
+    region = "nyc"
+
+    static_site {
+      name             = "demo-app-frontend"
+      source_dir       = "apps/web"
+      build_command    = "npm run build"
+      output_dir       = "dist"
+
+      github {
+        repo           = "maxpw/demo-web"
+        branch         = "main"
+        deploy_on_push = true
+      }
+
+      env {
+        key   = "SESSION_SECRET"
+        value = var.project_SESSION_SECRET
+        type  = "SECRET"
+      }
+      env {
+        key   = "DATABASE_NAME"
+        value = digitalocean_database_db.demo_app.name
+        type  = "GENERAL"
+      }
+      env {
+        key   = "DATABASE_USER"
+        value = digitalocean_database_user.demo_app.name
+        type  = "GENERAL"
+      }
+    }
+
+    service {
+      name             = "demo-app-backend"
+      source_dir       = "apps/api"
+      build_command    = "npm run build"
+      run_command      = "node dist/index.mjs"
+      instance_count   = 1
+      instance_size_slug = "basic-xxs"
+
+      github {
+        repo           = "maxpw/demo-api"
+        branch         = "main"
+        deploy_on_push = true
+      }
+
+      env {
+        key   = "SESSION_SECRET"
+        value = var.project_SESSION_SECRET
+        type  = "SECRET"
+      }
+      env {
+        key   = "DATABASE_NAME"
+        value = digitalocean_database_db.demo_app.name
+        type  = "GENERAL"
+      }
+      env {
+        key   = "DATABASE_USER"
+        value = digitalocean_database_user.demo_app.name
+        type  = "GENERAL"
+      }
+    }
+
+    domain {
+      name = "demo-app.maximilian.pw"
+      type = "PRIMARY"
+      zone = "maximilian.pw"
+    }
+  }
+}
+
+resource "cloudflare_dns_record" "demo_app" {
+  zone_id = var.cloudflare_zone_id
+  name    = "demo-app"
+  content = digitalocean_app.demo_app.default_ingress
+  type    = "CNAME"
+  proxied = true
+  ttl     = 1
+}
+
+output "app_url" { value = "https://demo-app.maximilian.pw" }"
+`;
+
+exports[`Terraform/OpenTofu generation > snapshot for frontend-only projects 1`] = `
+"terraform {
+  cloud {
+    organization = var.terraform_cloud_organization
+    workspaces {
+      name = "maxcel-demo-app"
+    }
+  }
+
+  required_providers {
+    digitalocean = { source = "digitalocean/digitalocean", version = "~> 2.0" }
+    cloudflare = { source = "cloudflare/cloudflare", version = "~> 5.0" }
+  }
+}
+
+variable "terraform_cloud_organization" { type = string }
+variable "digitalocean_token" { type = string, sensitive = true }
+variable "cloudflare_api_token" { type = string, sensitive = true }
+variable "cloudflare_zone_id" { type = string }
+variable "project_SESSION_SECRET" { type = string, sensitive = true }
+
+provider "digitalocean" { token = var.digitalocean_token }
+provider "cloudflare" { api_token = var.cloudflare_api_token }
+
+resource "digitalocean_app" "demo_app" {
+  spec {
+    name   = "maxcel-demo-app"
+    region = "nyc"
+
+    static_site {
+      name             = "demo-app-frontend"
+      source_dir       = "apps/web"
+      build_command    = "npm run build"
+      output_dir       = "dist"
+
+      github {
+        repo           = "maxpw/demo-web"
+        branch         = "main"
+        deploy_on_push = true
+      }
+
+      env {
+        key   = "SESSION_SECRET"
+        value = var.project_SESSION_SECRET
+        type  = "SECRET"
+      }
+    }
+
+    domain {
+      name = "demo-app.maximilian.pw"
+      type = "PRIMARY"
+      zone = "maximilian.pw"
+    }
+  }
+}
+
+resource "cloudflare_dns_record" "demo_app" {
+  zone_id = var.cloudflare_zone_id
+  name    = "demo-app"
+  content = digitalocean_app.demo_app.default_ingress
+  type    = "CNAME"
+  proxied = true
+  ttl     = 1
+}
+
+output "app_url" { value = "https://demo-app.maximilian.pw" }"
+`;
