@@ -4,9 +4,9 @@ import {
   toDigitalOceanAppSpec,
   toTerraformCloudWorkspace,
 } from './providers'
-import { generateInfraRevision, renderTerraform } from './terraform'
-import type { ProjectDraftInput } from './types'
-import { validateProjectDraft } from './validation'
+import { generateInfraRevision, renderTerraform } from './index'
+import type { ProjectDraftInput } from '../types'
+import { validateProjectDraft } from '../validation'
 
 describe('Terraform/OpenTofu generation', () => {
   it.each([
@@ -23,9 +23,15 @@ describe('Terraform/OpenTofu generation', () => {
     const revision = generateInfraRevision(config)
 
     expect(revision.files.map((file) => file.path)).toEqual([
-      'projects/demo-app/main.tf',
+      'projects/demo-app/terraform/main.tf',
       '.github/workflows/demo-app-terraform.yml',
     ])
+    expect(revision.files[1]?.contents).toContain(
+      'working-directory: projects/demo-app/terraform',
+    )
+    expect(revision.files[1]?.contents).toContain(
+      '- "projects/demo-app/terraform/**"',
+    )
     expect(revision.prBody).toContain(
       'DigitalOcean App Platform app: maxcel-demo-app',
     )

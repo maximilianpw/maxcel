@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createProjectAndGenerateInfraPr } from './workflows'
-import { InMemoryPlatformStore } from './store'
+import { InMemoryPlatformStore } from './stores/memory'
 
 describe('GitHub infra PR workflow', () => {
   it('creates a project, generated files, and mocked pull request request', async () => {

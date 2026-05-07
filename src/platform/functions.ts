@@ -1,35 +1,33 @@
 import { createServerFn } from '@tanstack/react-start'
-import { platformStore } from './store'
-import { validateProjectDraft } from './validation'
+import * as projectOperations from './projects'
 import type { ProjectDraftInput } from './types'
 
 export const listProjects = createServerFn({ method: 'GET' }).handler(
   async () => {
-    return platformStore.listProjects()
+    return projectOperations.listProjects()
   },
 )
 
 export const createProjectDraft = createServerFn({ method: 'POST' })
   .inputValidator((data: ProjectDraftInput) => data)
   .handler(async ({ data }) => {
-    const config = validateProjectDraft(data)
-    return platformStore.createProject(config)
+    return projectOperations.createProjectDraft(data)
   })
 
 export const generateInfraPr = createServerFn({ method: 'POST' })
   .inputValidator((data: { projectId: string }) => data)
   .handler(async ({ data }) => {
-    return platformStore.generateInfraRevision(data.projectId)
+    return projectOperations.generateInfraPr(data.projectId)
   })
 
 export const archiveProject = createServerFn({ method: 'POST' })
   .inputValidator((data: { projectId: string }) => data)
   .handler(async ({ data }) => {
-    return platformStore.archiveProject(data.projectId)
+    return projectOperations.archiveProject(data.projectId)
   })
 
 export const previewProjectConfig = createServerFn({ method: 'POST' })
   .inputValidator((data: ProjectDraftInput) => data)
   .handler(async ({ data }) => {
-    return validateProjectDraft(data)
+    return projectOperations.previewProjectConfig(data)
   })

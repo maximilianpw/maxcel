@@ -1,8 +1,8 @@
 import { createGitHubInfraPr } from './github'
 import type { GitHubInfraClient, PullRequestResult } from './github'
-import type { PlatformStore, ProjectRecord } from './store'
+import type { PlatformStore } from './stores/types'
 import { validateProjectDraft } from './validation'
-import type { InfraRevision, ProjectDraftInput } from './types'
+import type { InfraRevision, ProjectDraftInput, ProjectRecord } from './types'
 
 export interface OnboardProjectRequest {
   draft: ProjectDraftInput

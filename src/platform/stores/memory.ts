@@ -1,12 +1,6 @@
-import { generateInfraRevision } from './terraform'
-import type { InfraRevision, ProjectConfig, ProjectRecord } from './types'
-
-export interface PlatformStore {
-  listProjects: () => Promise<ProjectRecord[]>
-  createProject: (config: ProjectConfig) => Promise<ProjectRecord>
-  archiveProject: (id: string) => Promise<ProjectRecord>
-  generateInfraRevision: (id: string) => Promise<InfraRevision>
-}
+import { generateInfraRevision } from '../terraform'
+import type { InfraRevision, ProjectConfig, ProjectRecord } from '../types'
+import type { PlatformStore } from './types'
 
 export class InMemoryPlatformStore implements PlatformStore {
   readonly projects = new Map<string, ProjectRecord>()

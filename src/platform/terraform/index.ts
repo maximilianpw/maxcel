@@ -1,10 +1,11 @@
-import { buildInfraPrBody, buildInfraPrTitle } from './github'
+import { buildInfraPrBody, buildInfraPrTitle } from '../github'
 import { toTerraformCloudWorkspace } from './providers'
-import type { ComponentConfig, InfraRevision, ProjectConfig } from './types'
+import type { ComponentConfig, InfraRevision, ProjectConfig } from '../types'
 
 export function generateInfraRevision(config: ProjectConfig): InfraRevision {
   const terraformCloud = toTerraformCloudWorkspace(config)
   const estimatedMonthlyCostUsd = estimateMonthlyCost(config)
+  const terraformDirectory = projectTerraformDirectory(config)
   const requiredSecrets = [
     'DIGITALOCEAN_TOKEN',
     'CLOUDFLARE_API_TOKEN',
@@ -20,7 +21,7 @@ export function generateInfraRevision(config: ProjectConfig): InfraRevision {
     projectSlug: config.slug,
     files: [
       {
-        path: `projects/${config.slug}/main.tf`,
+        path: `${terraformDirectory}/main.tf`,
         contents: renderTerraform(config),
       },
       {
@@ -187,24 +188,26 @@ function renderComponent(
 }
 
 function renderGitHubActionsWorkflow(config: ProjectConfig): string {
+  const terraformDirectory = projectTerraformDirectory(config)
+
   return [
     `name: ${config.slug} terraform`,
     ``,
     `on:`,
     `  pull_request:`,
     `    paths:`,
-    `      - "projects/${config.slug}/**"`,
+    `      - "${terraformDirectory}/**"`,
     `  push:`,
     `    branches: [main]`,
     `    paths:`,
-    `      - "projects/${config.slug}/**"`,
+    `      - "${terraformDirectory}/**"`,
     ``,
     `jobs:`,
     `  terraform:`,
     `    runs-on: ubuntu-latest`,
     `    defaults:`,
     `      run:`,
-    `        working-directory: projects/${config.slug}`,
+    `        working-directory: ${terraformDirectory}`,
     `    steps:`,
     `      - uses: actions/checkout@v4`,
     `      - uses: hashicorp/setup-terraform@v3`,
@@ -228,4 +231,8 @@ function hclName(value: string): string {
 
 function hclString(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+}
+
+function projectTerraformDirectory(config: ProjectConfig): string {
+  return `projects/${config.slug}/terraform`
 }

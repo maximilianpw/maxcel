@@ -1,4 +1,4 @@
-import type { ProjectConfig } from './types'
+import type { ProjectConfig } from '../types'
 
 export interface DigitalOceanAppSpec {
   name: string

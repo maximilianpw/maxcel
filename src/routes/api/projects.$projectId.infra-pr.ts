@@ -1,13 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { platformStore } from '../../platform/store'
+import { generateInfraPr } from '../../platform/projects'
 
 export const Route = createFileRoute('/api/projects/$projectId/infra-pr')({
   server: {
     handlers: {
       POST: async ({ params }) => {
-        const revision = await platformStore.generateInfraRevision(
-          params.projectId,
-        )
+        const revision = await generateInfraPr(params.projectId)
         return Response.json(revision, { status: 201 })
       },
     },

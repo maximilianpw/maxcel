@@ -1,15 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { platformStore } from '../../platform/store'
-import { validateProjectDraft } from '../../platform/validation'
+import { createProjectDraft, listProjects } from '../../platform/projects'
 
 export const Route = createFileRoute('/api/projects')({
   server: {
     handlers: {
-      GET: async () => Response.json(await platformStore.listProjects()),
+      GET: async () => Response.json(await listProjects()),
       POST: async ({ request }) => {
         const body = await request.json()
-        const config = validateProjectDraft(body)
-        const project = await platformStore.createProject(config)
+        const project = await createProjectDraft(body)
         return Response.json(project, { status: 201 })
       },
     },
