@@ -1,3 +1,8 @@
+import {
+  PR_STATUS,
+  TERRAFORM_STATE_TARGET_PREFIX,
+  platformResourceName,
+} from './constants'
 import type { InfraRevision, ProjectConfig } from './types'
 
 export interface InfraPrRequest {
@@ -10,7 +15,7 @@ export interface InfraPrRequest {
 export interface PullRequestResult {
   number: number
   url: string
-  status: 'open'
+  status: typeof PR_STATUS
 }
 
 export interface GitHubInfraClient {
@@ -63,7 +68,7 @@ export function buildInfraPrBody(
   >,
 ): string {
   const resources = [
-    `DigitalOcean App Platform app: maxcel-${config.slug}`,
+    `DigitalOcean App Platform app: ${platformResourceName(config.slug)}`,
     `Cloudflare DNS CNAME: ${config.domain}`,
     config.database
       ? `DigitalOcean Postgres allocation: database ${config.database.databaseName}, user ${config.database.username}`
@@ -82,7 +87,7 @@ export function buildInfraPrBody(
     ``,
     `## Terraform Cloud`,
     `Workspace: ${revision.terraformCloudWorkspace}`,
-    `State target: app/${config.slug}`,
+    `State target: ${TERRAFORM_STATE_TARGET_PREFIX}/${config.slug}`,
     ``,
     `## Manual Review Checklist`,
     `- [ ] Repo refs, branches, and app paths are correct.`,

@@ -1,3 +1,4 @@
+import { DEPLOY_STATUS, PR_STATUS } from '../constants'
 import { generateInfraRevision } from '../terraform'
 import type { InfraRevision, ProjectConfig, ProjectRecord } from '../types'
 import type { PlatformStore } from './types'
@@ -18,8 +19,8 @@ export class InMemoryPlatformStore implements PlatformStore {
       config,
       createdAt: now,
       archivedAt: null,
-      prStatus: 'draft',
-      deployStatus: 'idle',
+      prStatus: PR_STATUS.DRAFT,
+      deployStatus: DEPLOY_STATUS.IDLE,
     }
     this.projects.set(record.id, record)
     return record
@@ -28,7 +29,7 @@ export class InMemoryPlatformStore implements PlatformStore {
   async archiveProject(id: string): Promise<ProjectRecord> {
     const record = this.requireProject(id)
     record.archivedAt = new Date().toISOString()
-    record.deployStatus = 'idle'
+    record.deployStatus = DEPLOY_STATUS.IDLE
     return record
   }
 
@@ -36,8 +37,8 @@ export class InMemoryPlatformStore implements PlatformStore {
     const record = this.requireProject(id)
     const revision = generateInfraRevision(record.config)
     record.latestRevision = revision
-    record.prStatus = 'open'
-    record.deployStatus = 'waiting_review'
+    record.prStatus = PR_STATUS.OPEN
+    record.deployStatus = DEPLOY_STATUS.WAITING_REVIEW
     return revision
   }
 

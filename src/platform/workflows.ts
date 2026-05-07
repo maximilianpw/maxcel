@@ -1,3 +1,4 @@
+import { DEFAULT_BRANCH, PLATFORM_RESOURCE_PREFIX } from './constants'
 import { createGitHubInfraPr } from './github'
 import type { GitHubInfraClient, PullRequestResult } from './github'
 import type { PlatformStore } from './stores/types'
@@ -26,8 +27,8 @@ export async function createProjectAndGenerateInfraPr(
   const revision = await store.generateInfraRevision(project.id)
   const pullRequest = await createGitHubInfraPr(github, {
     infraRepo: request.infraRepo,
-    baseBranch: request.baseBranch ?? 'main',
-    headBranch: `maxcel/${config.slug}`,
+    baseBranch: request.baseBranch ?? DEFAULT_BRANCH,
+    headBranch: `${PLATFORM_RESOURCE_PREFIX}/${config.slug}`,
     revision,
   })
 

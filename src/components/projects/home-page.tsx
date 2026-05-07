@@ -16,6 +16,7 @@ import {
   createProjectDraft,
   generateInfraPr,
 } from '@/platform/functions'
+import { DOMAIN_ROOT } from '@/platform/constants'
 import type { ProjectDraftInput, ProjectRecord } from '@/platform/types'
 import { ProjectDraftForm } from './project-draft-form'
 import { ProjectSurface } from './project-surface'
@@ -82,7 +83,7 @@ export function ProjectsHomePage({ projects }: { projects: ProjectRecord[] }) {
             </div>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
               Onboard GitHub apps, generate reviewable Terraform, and route them
-              under maximilian.pw.
+              under {DOMAIN_ROOT}.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

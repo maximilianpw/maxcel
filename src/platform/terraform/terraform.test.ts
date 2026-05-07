@@ -5,8 +5,17 @@ import {
   toTerraformCloudWorkspace,
 } from './providers'
 import { generateInfraRevision, renderTerraform } from './index'
+import {
+  DEFAULT_BRANCH,
+  DOMAIN_ROOT,
+  REQUIRED_PROVIDER_SECRET_NAMES,
+  SHARED_POSTGRES_CLUSTER_NAME,
+  TERRAFORM_CLOUD_ORG_GH_SECRET,
+  TERRAFORM_STATE_TARGET_PREFIX,
+  platformResourceName,
+} from '../constants'
 import type { ProjectDraftInput } from '../types'
-import { validateProjectDraft } from '../validation'
+import { projectDomain, validateProjectDraft } from '../validation'
 
 describe('Terraform/OpenTofu generation', () => {
   it.each([
@@ -33,10 +42,14 @@ describe('Terraform/OpenTofu generation', () => {
       '- "projects/demo-app/terraform/**"',
     )
     expect(revision.prBody).toContain(
-      'DigitalOcean App Platform app: maxcel-demo-app',
+      `DigitalOcean App Platform app: ${platformResourceName('demo-app')}`,
     )
-    expect(revision.prBody).toContain('Workspace: maxcel-demo-app')
-    expect(revision.requiredSecrets).toContain('DIGITALOCEAN_TOKEN')
+    expect(revision.prBody).toContain(
+      `Workspace: ${platformResourceName('demo-app')}`,
+    )
+    expect(revision.requiredSecrets).toEqual(
+      expect.arrayContaining([...REQUIRED_PROVIDER_SECRET_NAMES]),
+    )
     expect(revision.estimatedMonthlyCostUsd).toBe(25)
   })
 
@@ -44,21 +57,23 @@ describe('Terraform/OpenTofu generation', () => {
     const config = validateProjectDraft(draft({ databaseNeeded: true }))
 
     expect(toDigitalOceanAppSpec(config)).toMatchObject({
-      name: 'maxcel-demo-app',
-      domains: [{ domain: 'demo-app.maximilian.pw', type: 'PRIMARY' }],
-      databases: [{ name: 'maxcel-shared-v1', engine: 'PG', production: true }],
+      name: platformResourceName('demo-app'),
+      domains: [{ domain: projectDomain('demo-app'), type: 'PRIMARY' }],
+      databases: [
+        { name: SHARED_POSTGRES_CLUSTER_NAME, engine: 'PG', production: true },
+      ],
     })
     expect(toCloudflareDnsRecord(config, 'demo.ondigitalocean.app')).toEqual({
-      zone: 'maximilian.pw',
+      zone: DOMAIN_ROOT,
       name: 'demo-app',
       type: 'CNAME',
       content: 'demo.ondigitalocean.app',
       proxied: true,
     })
     expect(toTerraformCloudWorkspace(config)).toEqual({
-      organizationVariable: 'TF_CLOUD_ORGANIZATION',
-      workspace: 'maxcel-demo-app',
-      stateTarget: 'app/demo-app',
+      organizationVariable: TERRAFORM_CLOUD_ORG_GH_SECRET,
+      workspace: platformResourceName('demo-app'),
+      stateTarget: `${TERRAFORM_STATE_TARGET_PREFIX}/demo-app`,
     })
   })
 })
@@ -75,7 +90,11 @@ function draft(options: {
       options.frontend === false
         ? null
         : {
-            repo: { repo: 'maxpw/demo-web', branch: 'main', path: 'apps/web' },
+            repo: {
+              repo: 'maxpw/demo-web',
+              branch: DEFAULT_BRANCH,
+              path: 'apps/web',
+            },
             buildCommand: 'npm run build',
             outputDirectory: 'dist',
           },
@@ -83,7 +102,11 @@ function draft(options: {
       options.backend === false
         ? null
         : {
-            repo: { repo: 'maxpw/demo-api', branch: 'main', path: 'apps/api' },
+            repo: {
+              repo: 'maxpw/demo-api',
+              branch: DEFAULT_BRANCH,
+              path: 'apps/api',
+            },
             buildCommand: 'npm run build',
             runCommand: 'node dist/index.mjs',
           },

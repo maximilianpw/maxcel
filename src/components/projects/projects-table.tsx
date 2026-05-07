@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { PR_STATUS } from '@/platform/constants'
 import type { ProjectRecord } from '@/platform/types'
 
 export function ProjectsTable({
@@ -65,7 +66,9 @@ export function ProjectsTable({
             </TableCell>
             <TableCell>
               <Badge
-                variant={project.prStatus === 'open' ? 'default' : 'outline'}
+                variant={
+                  project.prStatus === PR_STATUS.OPEN ? 'default' : 'outline'
+                }
               >
                 {project.prStatus}
               </Badge>

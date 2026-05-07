@@ -1,4 +1,10 @@
-import { DOMAIN_ROOT } from './types'
+import {
+  COMPONENT_KIND,
+  DEFAULT_BRANCH,
+  DOMAIN_ROOT,
+  PLATFORM_RESOURCE_PREFIX,
+  SHARED_POSTGRES_CLUSTER_NAME,
+} from './constants'
 import type {
   ComponentConfig,
   ComponentInput,
@@ -54,7 +60,7 @@ export function normalizeRepoRef(input: RepoRefInput): RepoRef {
   return {
     owner,
     name,
-    branch: input.branch?.trim() || 'main',
+    branch: input.branch?.trim() || DEFAULT_BRANCH,
     path: normalizeRepoPath(input.path),
     fullName: `${owner}/${name}`,
   }
@@ -100,8 +106,8 @@ export function validateProjectDraft(input: ProjectDraftInput): ProjectConfig {
 
   const components: ComponentConfig[] = []
   for (const [kind, value] of [
-    ['frontend', input.frontend],
-    ['backend', input.backend],
+    [COMPONENT_KIND.FRONTEND, input.frontend],
+    [COMPONENT_KIND.BACKEND, input.backend],
   ] as const) {
     if (!value) {
       continue
@@ -146,7 +152,7 @@ export function validateProjectDraft(input: ProjectDraftInput): ProjectConfig {
     components,
     database: input.databaseNeeded
       ? {
-          clusterName: 'maxcel-shared-v1',
+          clusterName: SHARED_POSTGRES_CLUSTER_NAME,
           databaseName: dbIdentifier(`${slug}_db`),
           username: dbIdentifier(`${slug}_app`),
         }
@@ -168,7 +174,7 @@ function normalizeComponent(
       { path: `${scope}.buildCommand`, message: 'Build command is required' },
     ])
   }
-  if (input.kind === 'backend' && !runCommand) {
+  if (input.kind === COMPONENT_KIND.BACKEND && !runCommand) {
     throw new ConfigValidationError([
       {
         path: `${scope}.runCommand`,
@@ -188,5 +194,8 @@ function normalizeComponent(
 }
 
 function dbIdentifier(value: string): string {
-  return `maxcel_${slugify(value).replace(/-/g, '_')}`.slice(0, 63)
+  return `${PLATFORM_RESOURCE_PREFIX}_${slugify(value).replace(/-/g, '_')}`.slice(
+    0,
+    63,
+  )
 }

@@ -16,7 +16,9 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { COMPONENT_KIND } from '@/platform/constants'
 import type { ProjectDraftInput } from '@/platform/types'
+import { projectDomain } from '@/platform/validation'
 import { defaultProjectDraftForm, formToProjectDraft } from './project-draft'
 import type { ReactNode } from 'react'
 import type {
@@ -111,7 +113,7 @@ export function ProjectDraftForm({
           <TabsContent value="components" className="pt-4">
             <div className="grid gap-5">
               <ComponentFields
-                componentKey="frontend"
+                componentKey={COMPONENT_KIND.FRONTEND}
                 component={form.components.frontend}
                 onChange={updateComponentField}
               />
@@ -127,7 +129,7 @@ export function ProjectDraftForm({
               </label>
               {form.settings.includeBackend ? (
                 <ComponentFields
-                  componentKey="backend"
+                  componentKey={COMPONENT_KIND.BACKEND}
                   component={form.components.backend}
                   onChange={updateComponentField}
                 />
@@ -182,7 +184,7 @@ function ProjectFields({
       <div className="rounded-lg border bg-background px-3 py-2 text-sm md:col-span-2">
         <div className="text-muted-foreground">Generated domain</div>
         <div className="mt-1 font-medium">
-          {form.project.slug || 'project'}.maximilian.pw
+          {projectDomain(form.project.slug || 'project')}
         </div>
       </div>
       <label className="flex items-center gap-3 rounded-lg border bg-background px-3 py-2 text-sm">
@@ -213,7 +215,8 @@ function ComponentFields({
     value: string,
   ) => void
 }) {
-  const title = componentKey === 'frontend' ? 'Frontend' : 'Backend'
+  const title =
+    componentKey === COMPONENT_KIND.FRONTEND ? 'Frontend' : 'Backend'
 
   return (
     <div className="grid gap-3">
@@ -254,7 +257,7 @@ function ComponentFields({
             }
           />
         </Field>
-        {componentKey === 'frontend' ? (
+        {componentKey === COMPONENT_KIND.FRONTEND ? (
           <Field label="Output directory">
             <Input
               value={component.outputDirectory}
@@ -264,7 +267,7 @@ function ComponentFields({
             />
           </Field>
         ) : null}
-        {componentKey === 'backend' ? (
+        {componentKey === COMPONENT_KIND.BACKEND ? (
           <Field label="Start command">
             <Input
               value={component.runCommand}

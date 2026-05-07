@@ -1,3 +1,10 @@
+import {
+  COMPONENT_KINDS,
+  DEPLOY_STATUSES,
+  PROVIDER_IDS,
+  PR_STATUSES,
+} from '../../constants'
+
 export const POSTGRES_SCHEMA_SQL = `
 create table projects (
   id uuid primary key,
@@ -15,7 +22,7 @@ create table projects (
 create table app_components (
   id uuid primary key,
   project_id uuid not null references projects(id) on delete cascade,
-  kind text not null check (kind in ('frontend', 'backend')),
+  kind text not null check (kind in (${sqlCheckList(COMPONENT_KINDS)})),
   github_owner text not null,
   github_repo text not null,
   branch text not null,
@@ -40,7 +47,7 @@ create table environment_variables (
 
 create table provider_credentials (
   id uuid primary key,
-  provider text not null check (provider in ('github', 'digitalocean', 'cloudflare', 'terraform_cloud')),
+  provider text not null check (provider in (${sqlCheckList(PROVIDER_IDS)})),
   display_name text not null,
   encrypted_token jsonb not null,
   metadata jsonb not null default '{}',
@@ -54,7 +61,7 @@ create table infra_revisions (
   files jsonb not null,
   pr_number integer,
   pr_url text,
-  pr_status text not null check (pr_status in ('draft', 'open', 'merged', 'closed')),
+  pr_status text not null check (pr_status in (${sqlCheckList(PR_STATUSES)})),
   terraform_cloud_workspace text not null,
   estimated_monthly_cost_usd numeric(8,2) not null,
   created_at timestamptz not null default now()
@@ -63,8 +70,8 @@ create table infra_revisions (
 create table deploy_statuses (
   id uuid primary key,
   project_id uuid not null references projects(id) on delete cascade,
-  provider text not null,
-  status text not null check (status in ('idle', 'planning', 'waiting_review', 'deploying', 'ready', 'failed')),
+  provider text not null check (provider in (${sqlCheckList(PROVIDER_IDS)})),
+  status text not null check (status in (${sqlCheckList(DEPLOY_STATUSES)})),
   status_url text,
   message text,
   observed_at timestamptz not null default now()
@@ -75,3 +82,7 @@ create index environment_variables_project_id_idx on environment_variables(proje
 create index infra_revisions_project_id_idx on infra_revisions(project_id);
 create index deploy_statuses_project_id_observed_at_idx on deploy_statuses(project_id, observed_at desc);
 `
+
+function sqlCheckList(values: readonly string[]): string {
+  return values.map((value) => `'${value.replaceAll("'", "''")}'`).join(', ')
+}

@@ -1,3 +1,12 @@
+import {
+  COMPONENT_KIND,
+  DIGITALOCEAN_REGION,
+  DIGITALOCEAN_SERVICE_INSTANCE_SIZE,
+  DOMAIN_ROOT,
+  TERRAFORM_CLOUD_ORG_GH_SECRET,
+  TERRAFORM_STATE_TARGET_PREFIX,
+  platformResourceName,
+} from '../constants'
 import type { ProjectConfig } from '../types'
 
 export interface DigitalOceanAppSpec {
@@ -13,11 +22,11 @@ export function toDigitalOceanAppSpec(
   config: ProjectConfig,
 ): DigitalOceanAppSpec {
   return {
-    name: `maxcel-${config.slug}`,
-    region: 'nyc',
+    name: platformResourceName(config.slug),
+    region: DIGITALOCEAN_REGION,
     domains: [{ domain: config.domain, type: 'PRIMARY' }],
     services: config.components
-      .filter((component) => component.kind === 'backend')
+      .filter((component) => component.kind === COMPONENT_KIND.BACKEND)
       .map((component) => ({
         name: `${config.slug}-backend`,
         github: githubSource(component.repo.fullName, component.repo.branch),
@@ -25,10 +34,10 @@ export function toDigitalOceanAppSpec(
         build_command: component.buildCommand,
         run_command: component.runCommand,
         instance_count: 1,
-        instance_size_slug: 'basic-xxs',
+        instance_size_slug: DIGITALOCEAN_SERVICE_INSTANCE_SIZE,
       })),
     static_sites: config.components
-      .filter((component) => component.kind === 'frontend')
+      .filter((component) => component.kind === COMPONENT_KIND.FRONTEND)
       .map((component) => ({
         name: `${config.slug}-frontend`,
         github: githubSource(component.repo.fullName, component.repo.branch),
@@ -47,7 +56,7 @@ export function toCloudflareDnsRecord(
   appHostname: string,
 ) {
   return {
-    zone: 'maximilian.pw',
+    zone: DOMAIN_ROOT,
     name: config.slug,
     type: 'CNAME' as const,
     content: appHostname,
@@ -57,9 +66,9 @@ export function toCloudflareDnsRecord(
 
 export function toTerraformCloudWorkspace(config: ProjectConfig) {
   return {
-    organizationVariable: 'TF_CLOUD_ORGANIZATION',
-    workspace: `maxcel-${config.slug}`,
-    stateTarget: `app/${config.slug}`,
+    organizationVariable: TERRAFORM_CLOUD_ORG_GH_SECRET,
+    workspace: platformResourceName(config.slug),
+    stateTarget: `${TERRAFORM_STATE_TARGET_PREFIX}/${config.slug}`,
   }
 }
 

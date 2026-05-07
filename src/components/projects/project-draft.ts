@@ -1,6 +1,12 @@
-import type { EnvVarInput, ProjectDraftInput } from '@/platform/types'
+import { DEFAULT_BRANCH } from '@/platform/constants'
+import { projectDomain } from '@/platform/validation'
+import type {
+  ComponentKind,
+  EnvVarInput,
+  ProjectDraftInput,
+} from '@/platform/types'
 
-export type ProjectComponentKey = 'frontend' | 'backend'
+export type ProjectComponentKey = ComponentKind
 
 export interface ProjectComponentForm {
   repo: string
@@ -28,11 +34,13 @@ export type ProjectField = keyof ProjectDraftFormState['project']
 export type ProjectSetting = keyof ProjectDraftFormState['settings']
 export type ProjectComponentField = keyof ProjectComponentForm
 
+const DEFAULT_PROJECT_SLUG = 'launchpad-api'
+
 export const defaultProjectDraftForm: ProjectDraftFormState = {
   project: {
     name: 'Launchpad API',
-    slug: 'launchpad-api',
-    env: 'PUBLIC_API_URL=https://launchpad-api.maximilian.pw\nSESSION_SECRET=replace-me',
+    slug: DEFAULT_PROJECT_SLUG,
+    env: `PUBLIC_API_URL=https://${projectDomain(DEFAULT_PROJECT_SLUG)}\nSESSION_SECRET=replace-me`,
   },
   settings: {
     includeBackend: true,
@@ -41,7 +49,7 @@ export const defaultProjectDraftForm: ProjectDraftFormState = {
   components: {
     frontend: {
       repo: 'maxpw/launchpad',
-      branch: 'main',
+      branch: DEFAULT_BRANCH,
       path: 'apps/web',
       buildCommand: 'npm ci && npm run build',
       outputDirectory: 'dist',
@@ -49,7 +57,7 @@ export const defaultProjectDraftForm: ProjectDraftFormState = {
     },
     backend: {
       repo: 'maxpw/launchpad-api',
-      branch: 'main',
+      branch: DEFAULT_BRANCH,
       path: '.',
       buildCommand: 'npm ci && npm run build',
       outputDirectory: '',

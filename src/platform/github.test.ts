@@ -1,4 +1,9 @@
 import { describe, expect, it } from 'vitest'
+import {
+  DEFAULT_BRANCH,
+  PLATFORM_RESOURCE_PREFIX,
+  PR_STATUS,
+} from './constants'
 import { createProjectAndGenerateInfraPr } from './workflows'
 import { InMemoryPlatformStore } from './stores/memory'
 
@@ -12,7 +17,7 @@ describe('GitHub infra PR workflow', () => {
         return {
           number: 42,
           url: 'https://github.com/maxpw/infra/pull/42',
-          status: 'open' as const,
+          status: PR_STATUS.OPEN,
         }
       },
     }
@@ -22,7 +27,7 @@ describe('GitHub infra PR workflow', () => {
       draft: {
         name: 'Docs Site',
         frontend: {
-          repo: { repo: 'maxpw/docs', branch: 'main', path: '.' },
+          repo: { repo: 'maxpw/docs', branch: DEFAULT_BRANCH, path: '.' },
           buildCommand: 'npm run build',
           outputDirectory: 'dist',
         },
@@ -35,8 +40,8 @@ describe('GitHub infra PR workflow', () => {
     expect(requests).toHaveLength(1)
     expect(requests[0]).toMatchObject({
       repo: 'maxpw/infra',
-      base: 'main',
-      head: 'maxcel/docs-site',
+      base: DEFAULT_BRANCH,
+      head: `${PLATFORM_RESOURCE_PREFIX}/docs-site`,
       title: 'Provision docs-site on DigitalOcean App Platform',
     })
   })

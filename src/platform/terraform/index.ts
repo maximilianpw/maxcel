@@ -1,4 +1,14 @@
 import { buildInfraPrBody, buildInfraPrTitle } from '../github'
+import {
+  COMPONENT_KIND,
+  DEFAULT_BRANCH,
+  DIGITALOCEAN_REGION,
+  DIGITALOCEAN_SERVICE_INSTANCE_SIZE,
+  DOMAIN_ROOT,
+  REQUIRED_PROVIDER_SECRET_NAMES,
+  TERRAFORM_VARIABLES,
+  platformResourceName,
+} from '../constants'
 import { toTerraformCloudWorkspace } from './providers'
 import type { ComponentConfig, InfraRevision, ProjectConfig } from '../types'
 
@@ -7,10 +17,7 @@ export function generateInfraRevision(config: ProjectConfig): InfraRevision {
   const estimatedMonthlyCostUsd = estimateMonthlyCost(config)
   const terraformDirectory = projectTerraformDirectory(config)
   const requiredSecrets = [
-    'DIGITALOCEAN_TOKEN',
-    'CLOUDFLARE_API_TOKEN',
-    'CLOUDFLARE_ZONE_ID',
-    'TF_API_TOKEN',
+    ...REQUIRED_PROVIDER_SECRET_NAMES,
     ...config.env.map((env) => `TF_VAR_${env.variableName}`),
     ...config.components.flatMap((component) =>
       component.env.map((env) => `TF_VAR_${env.variableName}`),
@@ -51,9 +58,9 @@ export function renderTerraform(config: ProjectConfig): string {
   return [
     `terraform {`,
     `  cloud {`,
-    `    organization = var.terraform_cloud_organization`,
+    `    organization = var.${TERRAFORM_VARIABLES.CLOUD_ORGANIZATION}`,
     `    workspaces {`,
-    `      name = "maxcel-${hclString(config.slug)}"`,
+    `      name = "${hclString(platformResourceName(config.slug))}"`,
     `    }`,
     `  }`,
     ``,
@@ -63,23 +70,23 @@ export function renderTerraform(config: ProjectConfig): string {
     `  }`,
     `}`,
     ``,
-    `variable "terraform_cloud_organization" { type = string }`,
-    `variable "digitalocean_token" { type = string, sensitive = true }`,
-    `variable "cloudflare_api_token" { type = string, sensitive = true }`,
-    `variable "cloudflare_zone_id" { type = string }`,
+    `variable "${TERRAFORM_VARIABLES.CLOUD_ORGANIZATION}" { type = string }`,
+    `variable "${TERRAFORM_VARIABLES.DIGITALOCEAN_TOKEN}" { type = string, sensitive = true }`,
+    `variable "${TERRAFORM_VARIABLES.CLOUDFLARE_API_TOKEN}" { type = string, sensitive = true }`,
+    `variable "${TERRAFORM_VARIABLES.CLOUDFLARE_ZONE_ID}" { type = string }`,
     ...envVariables.map(
       (env) =>
         `variable "${env.variableName}" { type = string, sensitive = ${env.secret} }`,
     ),
     ``,
-    `provider "digitalocean" { token = var.digitalocean_token }`,
-    `provider "cloudflare" { api_token = var.cloudflare_api_token }`,
+    `provider "digitalocean" { token = var.${TERRAFORM_VARIABLES.DIGITALOCEAN_TOKEN} }`,
+    `provider "cloudflare" { api_token = var.${TERRAFORM_VARIABLES.CLOUDFLARE_API_TOKEN} }`,
     ``,
     ...(config.database ? renderDatabase(config, resourceName) : []),
     `resource "digitalocean_app" "${resourceName}" {`,
     `  spec {`,
-    `    name   = "maxcel-${hclString(config.slug)}"`,
-    `    region = "nyc"`,
+    `    name   = "${hclString(platformResourceName(config.slug))}"`,
+    `    region = "${DIGITALOCEAN_REGION}"`,
     ``,
     ...config.components.flatMap((component) =>
       renderComponent(component, config),
@@ -87,13 +94,13 @@ export function renderTerraform(config: ProjectConfig): string {
     `    domain {`,
     `      name = "${hclString(config.domain)}"`,
     `      type = "PRIMARY"`,
-    `      zone = "${hclString('maximilian.pw')}"`,
+    `      zone = "${hclString(DOMAIN_ROOT)}"`,
     `    }`,
     `  }`,
     `}`,
     ``,
     `resource "cloudflare_dns_record" "${resourceName}" {`,
-    `  zone_id = var.cloudflare_zone_id`,
+    `  zone_id = var.${TERRAFORM_VARIABLES.CLOUDFLARE_ZONE_ID}`,
     `  name    = "${hclString(config.slug)}"`,
     `  content = digitalocean_app.${resourceName}.default_ingress`,
     `  type    = "CNAME"`,
@@ -132,7 +139,8 @@ function renderComponent(
   component: ComponentConfig,
   config: ProjectConfig,
 ): string[] {
-  const blockName = component.kind === 'frontend' ? 'static_site' : 'service'
+  const blockName =
+    component.kind === COMPONENT_KIND.FRONTEND ? 'static_site' : 'service'
   const name = `${config.slug}-${component.kind}`
   const env = [...config.env, ...component.env]
 
@@ -141,14 +149,14 @@ function renderComponent(
     `      name             = "${hclString(name)}"`,
     `      source_dir       = "${hclString(component.repo.path)}"`,
     `      build_command    = "${hclString(component.buildCommand)}"`,
-    ...(component.kind === 'frontend'
+    ...(component.kind === COMPONENT_KIND.FRONTEND
       ? [
           `      output_dir       = "${hclString(component.outputDirectory ?? 'dist')}"`,
         ]
       : [
           `      run_command      = "${hclString(component.runCommand ?? '')}"`,
           `      instance_count   = 1`,
-          `      instance_size_slug = "basic-xxs"`,
+          `      instance_size_slug = "${DIGITALOCEAN_SERVICE_INSTANCE_SIZE}"`,
         ]),
     ``,
     `      github {`,
@@ -198,7 +206,7 @@ function renderGitHubActionsWorkflow(config: ProjectConfig): string {
     `    paths:`,
     `      - "${terraformDirectory}/**"`,
     `  push:`,
-    `    branches: [main]`,
+    `    branches: [${DEFAULT_BRANCH}]`,
     `    paths:`,
     `      - "${terraformDirectory}/**"`,
     ``,

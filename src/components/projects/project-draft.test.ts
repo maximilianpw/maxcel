@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { DEFAULT_BRANCH } from '@/platform/constants'
+import { projectDomain } from '@/platform/validation'
 import {
   defaultProjectDraftForm,
   formToProjectDraft,
@@ -16,7 +18,7 @@ describe('project draft form helpers', () => {
       frontend: {
         repo: {
           repo: 'maxpw/launchpad',
-          branch: 'main',
+          branch: DEFAULT_BRANCH,
           path: 'apps/web',
         },
         buildCommand: 'npm ci && npm run build',
@@ -25,7 +27,7 @@ describe('project draft form helpers', () => {
       backend: {
         repo: {
           repo: 'maxpw/launchpad-api',
-          branch: 'main',
+          branch: DEFAULT_BRANCH,
           path: '.',
         },
         buildCommand: 'npm ci && npm run build',
@@ -35,7 +37,7 @@ describe('project draft form helpers', () => {
       env: [
         {
           key: 'PUBLIC_API_URL',
-          value: 'https://launchpad-api.maximilian.pw',
+          value: `https://${projectDomain('launchpad-api')}`,
           secret: true,
         },
         {
@@ -45,6 +47,12 @@ describe('project draft form helpers', () => {
         },
       ],
     })
+  })
+
+  it('builds the default public API URL from the platform domain helper', () => {
+    expect(defaultProjectDraftForm.project.env).toContain(
+      `PUBLIC_API_URL=https://${projectDomain(defaultProjectDraftForm.project.slug)}`,
+    )
   })
 
   it('omits the backend when the form disables it', () => {

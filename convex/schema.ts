@@ -1,23 +1,17 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
+import {
+  COMPONENT_KINDS,
+  DEPLOY_STATUSES,
+  PROVIDER_IDS,
+  PR_STATUSES,
+} from '../src/platform/constants'
 
-const componentKind = v.union(v.literal('frontend'), v.literal('backend'))
+const componentKind = oneOfLiterals(COMPONENT_KINDS)
 
-const deployStatus = v.union(
-  v.literal('idle'),
-  v.literal('planning'),
-  v.literal('waiting_review'),
-  v.literal('deploying'),
-  v.literal('ready'),
-  v.literal('failed'),
-)
+const deployStatus = oneOfLiterals(DEPLOY_STATUSES)
 
-const prStatus = v.union(
-  v.literal('draft'),
-  v.literal('open'),
-  v.literal('merged'),
-  v.literal('closed'),
-)
+const prStatus = oneOfLiterals(PR_STATUSES)
 
 const databaseAllocation = v.object({
   clusterName: v.string(),
@@ -33,12 +27,7 @@ const encryptedSecret = v.object({
   authTag: v.string(),
 })
 
-const provider = v.union(
-  v.literal('github'),
-  v.literal('digitalocean'),
-  v.literal('cloudflare'),
-  v.literal('terraform_cloud'),
-)
+const provider = oneOfLiterals(PROVIDER_IDS)
 
 export default defineSchema({
   projects: defineTable({
@@ -108,7 +97,7 @@ export default defineSchema({
 
   deployStatuses: defineTable({
     projectId: v.id('projects'),
-    provider: v.string(),
+    provider,
     status: deployStatus,
     statusUrl: v.optional(v.string()),
     message: v.optional(v.string()),
@@ -118,3 +107,7 @@ export default defineSchema({
     .index('by_projectId_and_provider', ['projectId', 'provider'])
     .index('by_projectId_and_observedAt', ['projectId', 'observedAt']),
 })
+
+function oneOfLiterals<const Values extends readonly string[]>(values: Values) {
+  return v.union(...values.map((value) => v.literal(value)))
+}

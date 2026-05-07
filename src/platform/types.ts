@@ -1,14 +1,16 @@
-export const DOMAIN_ROOT = 'maximilian.pw'
+import type {
+  COMPONENT_KIND,
+  DEPLOY_STATUS,
+  PROVIDER_ID,
+  PR_STATUS,
+} from './constants'
 
-export type ComponentKind = 'frontend' | 'backend'
-export type DeployStatus =
-  | 'idle'
-  | 'planning'
-  | 'waiting_review'
-  | 'deploying'
-  | 'ready'
-  | 'failed'
-export type PrStatus = 'draft' | 'open' | 'merged' | 'closed'
+export { DOMAIN_ROOT } from './constants'
+
+export type ComponentKind = (typeof COMPONENT_KIND)[keyof typeof COMPONENT_KIND]
+export type DeployStatus = (typeof DEPLOY_STATUS)[keyof typeof DEPLOY_STATUS]
+export type PrStatus = (typeof PR_STATUS)[keyof typeof PR_STATUS]
+export type ProviderId = (typeof PROVIDER_ID)[keyof typeof PROVIDER_ID]
 
 export interface RepoRefInput {
   repo: string
