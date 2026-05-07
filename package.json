@@ -18,9 +18,11 @@
     "node": ">=22.12.0"
   },
   "dependencies": {
+    "@convex-dev/react-query": "^0.1.0",
     "@fontsource-variable/geist": "^5.2.8",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-devtools": "0.10.2",
+    "@tanstack/react-query": "^5.100.9",
     "@tanstack/react-router": "1.169.2",
     "@tanstack/react-router-devtools": "1.166.13",
     "@tanstack/react-router-ssr-query": "1.166.12",
@@ -28,6 +30,7 @@
     "@tanstack/router-plugin": "^1.132.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "convex": "^1.37.0",
     "lucide-react": "^0.545.0",
     "nitro": "npm:nitro-nightly@3.0.1-20260506-172449-e1c63186",
     "radix-ui": "^1.4.3",
