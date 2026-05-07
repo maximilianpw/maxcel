@@ -15,7 +15,7 @@ export interface InfraPrRequest {
 export interface PullRequestResult {
   number: number
   url: string
-  status: typeof PR_STATUS
+  status: typeof PR_STATUS.OPEN
 }
 
 export interface GitHubInfraClient {
